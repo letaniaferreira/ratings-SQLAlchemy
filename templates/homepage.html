@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+
+{% block title %} Homepage {% endblock %}
+
+
+{% block content %}
+
+<h1>Ratings</h1>
+
+<h2>Movies</h2>
+<p><a href="/movies">View all movies</a></p>
+
+<h2>Users</h2>
+<p><a href="/users">View all users</a></p>
+<br><br>
+
+<h2><a href="/register">Click here to register for an account!</a></h2>
+<br><br>
+<h1>Login here!</h1>
+
+<form action="/login" method=POST>
+  Email:<br>
+  <input type="text" name="email">
+  <br>
+  Password:<br>
+  <input type="password" name="password">
+  <br>
+  <br>
+  <input type="submit" value="Submit">
+</form>
+
+
+{% endblock %}
