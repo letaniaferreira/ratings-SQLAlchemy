@@ -16,7 +16,11 @@
     {% endwith %}
     </div>
 
-    {% if session[user]}
+    <div id="logout">
+
+        <form action="/logout">
+            <input type="submit" value="Logout">
+        </form>
 
   {% block content %} CONTENT GOES HERE {% endblock %}
 

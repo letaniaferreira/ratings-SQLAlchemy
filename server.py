@@ -59,7 +59,8 @@ def confirm_registration():
         new_user = User(email=email, password=password)
         db.session.add(new_user)
         db.session.commit()
-        flash("You have been registered! Yay!")
+        flash("You have been registered and logged in! Yay!")
+        session['email'] = email
 
     return redirect("/")
 
@@ -71,27 +72,28 @@ def log_in():
     email = request.form.get("email")
     password = request.form.get("password")
 
-    duplicates = db.session.query(User).filter_by(email=email).first()
+    user = db.session.query(User).filter_by(email=email).first()
 
-    if duplicates:
-        if password == duplicates.password:
-            session[email] = password
-            flash("You have been logged in!")
-            return redirect("/")
-        else:
-            flash("Wrong password. Please try again.")
-            return redirect("/")
+    if user and password == user.password:
+        session['email'] = email
+        flash("You have been logged in!")
+        ratings = Rating.query.options(db.joinedload('user')).all()
+        # movies = Movie.query.options(db.joinedload('ratings').all())
+        return render_template("user_list.html", user=user, ratings=ratings)
+
     else:
-        flash("Not a valid user. Please create an account.")
-        return render_template("registration_form.html")
+        flash("Login failed. Email or password was not correct.")
+        return redirect("/")
+
 
 @app.route("/logout")
 def log_out():
     """Logs the user out"""
 
-    for key in session.keys():
-     session.pop[]
+    del session['email']
+    flash("You are logged out!")
 
+    return redirect("/")
 
 if __name__ == "__main__":
     # We have to set debug=True here, since it has to be True at the
