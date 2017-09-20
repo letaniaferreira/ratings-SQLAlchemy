@@ -52,7 +52,7 @@ def load_movies():
         imdb_url = rows[4]
 
         if title:
-            title = title[:-6]
+            title = title[:-7]
         else:
             continue
 

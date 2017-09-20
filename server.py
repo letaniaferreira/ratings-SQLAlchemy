@@ -36,6 +36,22 @@ def user_list():
     users = User.query.all()
     return render_template("all_users.html", users=users)
 
+@app.route("/movies")
+def movie_list():
+    """Show list of movies."""
+
+    movies = Movie.query.order_by('title').all()
+    return render_template("all_movies.html", movies=movies)
+
+
+@app.route("/movies/<some_id>")
+def movie_details(some_id):
+    """Shows movie details."""
+
+    movie = Movie.query.get(some_id)
+    ratings = Rating.query.options(db.joinedload('movie')).filter_by(movie_id=some_id).all()
+
+    return render_template("movie_page.html", movie=movie, ratings=ratings)
 
 @app.route("/register")
 def reg_form():
@@ -73,13 +89,13 @@ def log_in():
     password = request.form.get("password")
 
     user = db.session.query(User).filter_by(email=email).first()
+    u_id = user.user_id
 
     if user and password == user.password:
         session['email'] = email
         flash("You have been logged in!")
-        ratings = Rating.query.options(db.joinedload('user')).all()
-        # movies = Movie.query.options(db.joinedload('ratings').all())
-        return render_template("user_list.html", user=user, ratings=ratings)
+        ratings = Rating.query.options(db.joinedload('user')).filter_by(user_id=u_id).all()
+        return render_template("user_page.html", user=user, ratings=ratings)
 
     else:
         flash("Login failed. Email or password was not correct.")
