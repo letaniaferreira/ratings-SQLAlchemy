@@ -5,11 +5,9 @@ from jinja2 import StrictUndefined
 from flask_debugtoolbar import DebugToolbarExtension
 
 from flask import (Flask, render_template, redirect, request, flash,
-                   session, jsonify)
+                   session, url_for)
 
 from model import User, Rating, Movie, connect_to_db, db
-
-
 
 app = Flask(__name__)
 
@@ -25,7 +23,7 @@ app.jinja_env.undefined = StrictUndefined
 @app.route('/')
 def index():
     """Homepage."""
-    a = jsonify([1, 3])
+
     return render_template('homepage.html')
 
 
@@ -35,6 +33,7 @@ def user_list():
 
     users = User.query.all()
     return render_template("all_users.html", users=users)
+
 
 @app.route("/movies")
 def movie_list():
@@ -52,6 +51,17 @@ def movie_details(some_id):
     ratings = Rating.query.options(db.joinedload('movie')).filter_by(movie_id=some_id).all()
 
     return render_template("movie_page.html", movie=movie, ratings=ratings)
+
+
+@app.route("/users/<some_id>")
+def user_details(some_id):
+    """Shows user details."""
+
+    user = User.query.get(some_id)
+    ratings = Rating.query.options(db.joinedload('user')).filter_by(user_id=some_id).all()
+
+    return render_template("user_page.html", user=user, ratings=ratings)
+
 
 @app.route("/register")
 def reg_form():
@@ -100,6 +110,35 @@ def log_in():
     else:
         flash("Login failed. Email or password was not correct.")
         return redirect("/")
+
+
+@app.route("/rate", methods=["POST"])
+def rate_movie():
+    """Passes rating for movie"""
+
+    movie_id = request.form.get("movie")
+    score = request.form.get("score")
+
+    if session['email']:
+        email = session['email']
+        user = User.query.filter_by(email=email).first()
+        user_id = user.user_id
+        rating = Rating.query.filter(Rating.user_id == user_id, Rating.movie_id == movie_id).first()
+        if rating:
+            rating.score = score
+            db.session.commit()
+            flash("You have updated your rating.")
+            return redirect(url_for("/movie/", movie_id))
+        else:
+            new_rating = Rating(movie_id=movie_id, user_id=user_id, score=score)
+            db.session.add(new_rating)
+            db.session.commit()
+            flash("You have created a new rating!")
+            return redirect(url_for("/movie/", movie_id))
+
+    else:
+        flash("Not a valid user logged in.")
+        return redirect(url_for("/movie/", movie_id))
 
 
 @app.route("/logout")

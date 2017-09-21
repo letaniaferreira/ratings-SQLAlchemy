@@ -10,10 +10,19 @@
 Movie title: {{ movie.title }}
 <br>
 <br>
-Release Date: {{ movie.released_at}}
+Release Date: {{ movie.released_at.month}}-{{ movie.released_at.day}}-{{ movie.released_at.year}}
 <br>
 <br>
-IMDB Page: {{movie.imdb_url}}
+IMDB Page: <a href = "{{movie.imdb_url}}">link</a>
+<br>
+<br>
+<form action="/rate" method=POST>
+  Enter your rating as a number from 1 to 5, where 1 is the lowest score:<br>
+  <input type="text" name="score">
+  <input type="hidden" name="movie" value={{ movie.movie_id }}>
+  <input type="submit" value="Submit">
+</form>
+
 <ul>
 {% for rating in ratings if ratings%}
     <li>Rated the movie "{{ rating.movie.title }}": {{ rating.score }}</li>

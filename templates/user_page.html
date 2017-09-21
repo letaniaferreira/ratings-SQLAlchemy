@@ -14,7 +14,7 @@ User zipcode: {{ user.zipcode}}
 <br>
 <ul>
 {% for rating in ratings if ratings%}
-    <li>Rated the movie "{{ rating.movie.title }}": {{ rating.score }}</li>
+    <li>Rated the movie <a href="/movies/{{ rating.movie.movie_id }}">{{ rating.movie.title }}</a>: {{ rating.score }}</li>
 {% endfor %}
 </ul>
 
