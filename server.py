@@ -5,7 +5,7 @@ from jinja2 import StrictUndefined
 from flask_debugtoolbar import DebugToolbarExtension
 
 from flask import (Flask, render_template, redirect, request, flash,
-                   session, url_for)
+                   session)
 
 from model import User, Rating, Movie, connect_to_db, db
 
@@ -48,9 +48,8 @@ def movie_details(some_id):
     """Shows movie details."""
 
     movie = Movie.query.get(some_id)
-    ratings = Rating.query.options(db.joinedload('movie')).filter_by(movie_id=some_id).all()
 
-    return render_template("movie_page.html", movie=movie, ratings=ratings)
+    return render_template("movie_page.html", movie=movie)
 
 
 @app.route("/users/<some_id>")
@@ -58,9 +57,8 @@ def user_details(some_id):
     """Shows user details."""
 
     user = User.query.get(some_id)
-    ratings = Rating.query.options(db.joinedload('user')).filter_by(user_id=some_id).all()
 
-    return render_template("user_page.html", user=user, ratings=ratings)
+    return render_template("user_page.html", user=user)
 
 
 @app.route("/register")
@@ -99,15 +97,19 @@ def log_in():
     password = request.form.get("password")
 
     user = db.session.query(User).filter_by(email=email).first()
-    u_id = user.user_id
 
-    if user and password == user.password:
-        session['email'] = email
-        flash("You have been logged in!")
-        ratings = Rating.query.options(db.joinedload('user')).filter_by(user_id=u_id).all()
-        return render_template("user_page.html", user=user, ratings=ratings)
+    try:
+        user.user_id
 
-    else:
+        if user and password == user.password:
+            session['email'] = email
+            flash("You have been logged in!")
+            return render_template("user_page.html", user=user)
+        else:
+            flash("Login failed. Email or password was not correct.")
+            return redirect("/")
+
+    except AttributeError:
         flash("Login failed. Email or password was not correct.")
         return redirect("/")
 
@@ -118,27 +120,29 @@ def rate_movie():
 
     movie_id = request.form.get("movie")
     score = request.form.get("score")
+    movie = Movie.query.get(movie_id)
 
-    if session['email']:
+    try:
         email = session['email']
+
         user = User.query.filter_by(email=email).first()
         user_id = user.user_id
         rating = Rating.query.filter(Rating.user_id == user_id, Rating.movie_id == movie_id).first()
         if rating:
             rating.score = score
             db.session.commit()
-            flash("You have updated your rating.")
-            return redirect(url_for("/movie/", movie_id))
+            flash("You have updated your rating for " + movie.title + " to a " + score + ".")
+            return redirect("/movies/" + movie_id)
         else:
             new_rating = Rating(movie_id=movie_id, user_id=user_id, score=score)
             db.session.add(new_rating)
             db.session.commit()
-            flash("You have created a new rating!")
-            return redirect(url_for("/movie/", movie_id))
+            flash("You have rated " + movie.title + " as a " + score + ".")
+            return redirect("/movies/" + movie_id)
 
-    else:
-        flash("Not a valid user logged in.")
-        return redirect(url_for("/movie/", movie_id))
+    except KeyError:
+        flash("Not a valid user logged in!")
+        return redirect("/")
 
 
 @app.route("/logout")
